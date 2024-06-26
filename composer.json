@@ -1,32 +1,21 @@
 {
-    "name": "silverstripe-module/skeleton",
-    "description": "A skeleton for Silverstripe CMS modules.",
+    "name": "pixnyb/silverstripe-picsum",
+    "description": "A module that downloads sample images for each image in the database if the file does not exist. Useful for development when a database dump is provided.",
     "type": "silverstripe-vendormodule",
     "keywords": [
         "silverstripe",
-        "CMS"
+        "CMS",
+        "picsum",
+        "images",
+        "sample"
     ],
-    "license": "BSD-3-Clause",
     "require": {
-        "silverstripe/framework": "^5.0",
-        "silverstripe/admin": "^2.0"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^9.6",
-        "squizlabs/php_codesniffer": "^3.7",
-        "silverstripe/standards": "^1",
-        "phpstan/extension-installer": "^1.3"
+        "silverstripe/framework": "^5.0 || ^4.0"
     },
     "autoload": {
         "psr-4": {
-            "SilverStripeModule\\Skeleton\\": "src/",
-            "SilverStripeModule\\Skeleton\\Tests\\": "tests/php/"
+            "PixNyb\\Picsum\\": "src/"
         }
-    },
-    "extra": {
-        "expose": [
-            "client/dist"
-        ]
     },
     "minimum-stability": "dev",
     "prefer-stable": true
