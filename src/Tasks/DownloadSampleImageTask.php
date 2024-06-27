@@ -20,19 +20,31 @@ class DownloadSampleImageTask extends BuildTask
     {
         // Get all images
         $images = File::get()->filter('ClassName', Image::class);
-
-        // Check if the file exists on disk
-        $root = Director::publicFolder();
+        $counter = 0;
 
         foreach ($images as $image) {
-            $filename = $image->getFileFilename();
-            $path = Path::join($root, $filename);
-            echo $path;
+            $filename = $image->FileFilename;
+            $path = Director::publicFolder() . '/assets/' . $filename;
+            $dir = dirname($path);
 
-            // if (!file_exists($path)) {
-            //     $image->setFromAbsoluteURL($image->getURL());
-            //     $image->write();
-            // }
+            if (!file_exists($path)) {
+                if (!file_exists($dir))
+                    mkdir($dir, 0777, true);
+
+                $width = rand(500, 1000);
+                $height = rand(500, 1000);
+
+                $url = 'https://picsum.photos/' . $width . '/' . $height;
+                $data = file_get_contents($url);
+                file_put_contents($path, $data);
+                $image->setFromLocalFile($path);
+                $image->updateFilesystem();
+
+                $counter++;
+                echo "Downloaded $filename\n";
+            }
         }
+
+        echo "Downloaded $counter images\n";
     }
 }
