@@ -4,18 +4,23 @@ namespace PixNyb\Picsum\Tasks;
 
 use SilverStripe\Dev\BuildTask;
 use SilverStripe\Assets\File;
-use SilverStripe\Assets\Flysystem\FlysystemAssetStore;
 use SilverStripe\Assets\Image;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Assets\Storage\FileHashingService;
 use Exception;
-use SilverStripe\ORM\DB;
+use SilverStripe\Core\Config\Configurable;
 
 class DownloadSampleImageTask extends BuildTask
 {
+    use Configurable;
+
+    private static $assets_directory = 'assets';
+
+    /**
+     * @internal
+     */
     private static $segment = 'download-sample-images';
-    private static $assets_dir = 'assets';
 
     protected $title = 'Download Sample Images';
     protected $description = 'Download sample images from Lorem Picsum for each image that doesn\'t exist on disk';
@@ -35,7 +40,7 @@ class DownloadSampleImageTask extends BuildTask
                 continue;
             }
 
-            $path = Director::publicFolder() . '/' . self::$assets_dir . '/' . $filename;
+            $path = Director::publicFolder() . '/' . self::config()->get('assets_directory') . '/' . $filename;
             $dir = dirname($path);
 
             if (!file_exists($path)) {
