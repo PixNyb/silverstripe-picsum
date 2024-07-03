@@ -31,16 +31,11 @@ class DownloadSampleImageTask extends BuildTask
         foreach ($images as $image) {
             $filename = $image->getField('FileFilename');
             if (!$filename) {
-                $record = DB::query("SELECT Filename FROM File WHERE ID = " . $image->ID)->value();
-                if ($record)
-                    $filename = $record;
+                echo "Skipping image without filename\n";
+                continue;
             }
 
-            echo "Checking $filename\n";
-            if (!$filename)
-                continue;
-
-            $path = Director::publicFolder() . $filename;
+            $path = Director::publicFolder() . '/' . self::$assets_dir . '/' . $filename;
             $dir = dirname($path);
 
             if (!file_exists($path)) {
@@ -60,17 +55,20 @@ class DownloadSampleImageTask extends BuildTask
             }
 
             try {
-                // Strip the assets dir before putting it in FileFilename
-                $filefilename = preg_replace('/^' . preg_quote($this->config()->get('assets_dir') ?? 'assets', '/') . '\//', '', $filename);
-                $image->setField('FileFilename', $filefilename);
+                // If the file does not have a hash, compute it
+                if (!$image->getField('FileHash')) {
+                    $hash = Injector::inst()->get(FileHashingService::class)->computeFromStream(fopen($path, 'r'));
+                    $image->setField('FileHash', $hash);
+                }
 
-                $hash = Injector::inst()->get(FileHashingService::class)->computeFromStream(fopen($path, 'r'));
-                $image->setField('FileHash', $hash);
-
-                $image->write();
-
+                $image->setFromLocalFile($path);
                 $image->updateFilesystem();
+
                 $image->write();
+
+                // If the image is published, publish the file
+                if ($image->isPublished())
+                    $image->publishSingle();
             } catch (Exception $e) {
                 echo "Error updating $filename\n";
             }
