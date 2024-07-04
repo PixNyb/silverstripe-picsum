@@ -16,6 +16,8 @@ class DownloadSampleImageTask extends BuildTask
     use Configurable;
 
     private static $assets_directory = 'assets';
+    private static $prefetch = true;
+    private static $prefetch_limit = 10;
     private static $segment = 'download-sample-images';
 
     protected $title = 'Download Sample Images';
@@ -28,6 +30,16 @@ class DownloadSampleImageTask extends BuildTask
         $images = File::get()->filter('ClassName', Image::class);
         echo "Found " . $images->count() . " images\n";
         $counter = 0;
+
+        $prefetched_data = [];
+        if (self::config()->get('prefetch')) {
+            for ($i = 0; $i < self::config()->get('prefetch_limit'); $i++) {
+                $prefetched_data[] = self::getRandomImageAsData();
+            }
+
+            echo "Prefetched " . count($prefetched_data) . " images\n";
+        }
+
 
         foreach ($images as $image) {
             $filename = $image->getField('FileFilename');
@@ -43,20 +55,16 @@ class DownloadSampleImageTask extends BuildTask
                 if (!file_exists($dir))
                     mkdir($dir, 0777, true);
 
-                $width = rand(500, 1000);
-                $height = rand(500, 1000);
-
-                $url = 'https://picsum.photos/' . $width . '/' . $height;
-
-                $data = file_get_contents($url);
-                file_put_contents($path, $data);
+                if (self::config()->get('prefetch'))
+                    file_put_contents($path, $prefetched_data[array_rand($prefetched_data)]);
+                else
+                    file_put_contents($path, self::getRandomImageAsData());
 
                 $counter++;
                 echo "Downloaded $filename\n";
             }
 
             try {
-                // If the file does not have a hash, compute it
                 if (!$image->getField('FileHash')) {
                     $hash = Injector::inst()->get(FileHashingService::class)->computeFromStream(fopen($path, 'r'));
                     $image->setField('FileHash', $hash);
@@ -64,10 +72,8 @@ class DownloadSampleImageTask extends BuildTask
 
                 $image->setFromLocalFile($path);
                 $image->updateFilesystem();
-
                 $image->write();
 
-                // If the image is published, publish the file
                 if ($image->isPublished())
                     $image->publishSingle();
             } catch (Exception $e) {
@@ -76,5 +82,15 @@ class DownloadSampleImageTask extends BuildTask
         }
 
         echo "Downloaded $counter images\n";
+    }
+
+    private static function getRandomImageAsData()
+    {
+        $width = rand(500, 1000);
+        $height = rand(500, 1000);
+
+        $url = 'https://picsum.photos/' . $width . '/' . $height;
+
+        return file_get_contents($url);
     }
 }
