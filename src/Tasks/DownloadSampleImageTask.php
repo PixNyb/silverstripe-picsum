@@ -16,10 +16,6 @@ class DownloadSampleImageTask extends BuildTask
     use Configurable;
 
     private static $assets_directory = 'assets';
-
-    /**
-     * @internal
-     */
     private static $segment = 'download-sample-images';
 
     protected $title = 'Download Sample Images';
